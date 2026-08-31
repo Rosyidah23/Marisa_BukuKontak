@@ -8,8 +8,8 @@ import 'tambah_kontak_page.dart';
 // Halaman Beranda (halaman utama aplikasi)
 // Terdiri dari:
 // - AppBar
-// - Navigation Drawer (menu: Kontak, Tambah Kontak, Favorit, Tentang)
-// - TabBar & TabBarView (tab: Kontak, Favorit, Tentang)
+// - Navigation Drawer (menu: Kontak, Tambah Kontak, Favorit, Tentang Saya)
+// - TabBar & TabBarView (tab: Kontak, Favorit)
 // - FloatingActionButton (menambah kontak baru, hanya tampil di tab Kontak)
 class BerandaPage extends StatefulWidget {
   const BerandaPage({super.key});
@@ -27,12 +27,11 @@ class _BerandaPageState extends State<BerandaPage>
 
   static const int _tabKontak = 0;
   static const int _tabFavorit = 1;
-  static const int _tabTentang = 2;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     // agar FloatingActionButton ikut update saat tab berpindah
     _tabController.addListener(() => setState(() {}));
   }
@@ -65,13 +64,24 @@ class _BerandaPageState extends State<BerandaPage>
     });
   }
 
+  // Membuka Halaman Tentang (profil diri)
+  void _bukaTentang() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TentangPage()),
+    );
+  }
+
   // Dipanggil dari menu Drawer untuk berpindah tab / halaman
   void _pilihMenuDrawer(int index) {
-    Navigator.pop(context); // tutup drawer
+    Navigator.pop(context); // tutup drawer dulu
 
     if (index == -1) {
       // -1 menandakan menu "Tambah Kontak" -> buka halaman baru
       _bukaTambahKontak();
+    } else if (index == -2) {
+      // -2 menandakan menu "Tentang Saya" -> buka halaman baru
+      _bukaTentang();
     } else {
       setState(() {
         _tabController.index = index;
@@ -89,7 +99,6 @@ class _BerandaPageState extends State<BerandaPage>
           tabs: const <Widget>[
             Tab(icon: Icon(Icons.contacts), text: 'Kontak'),
             Tab(icon: Icon(Icons.star), text: 'Favorit'),
-            Tab(icon: Icon(Icons.info), text: 'Tentang'),
           ],
         ),
       ),
@@ -128,9 +137,9 @@ class _BerandaPageState extends State<BerandaPage>
               onTap: () => _pilihMenuDrawer(_tabFavorit),
             ),
             ListTile(
-              leading: const Icon(Icons.info),
-              title: const Text('Tentang'),
-              onTap: () => _pilihMenuDrawer(_tabTentang),
+              leading: const Icon(Icons.account_circle),
+              title: const Text('Tentang Saya'),
+              onTap: () => _pilihMenuDrawer(-2),
             ),
           ],
         ),
@@ -140,7 +149,6 @@ class _BerandaPageState extends State<BerandaPage>
         children: <Widget>[
           KontakPage(daftarKontak: _daftarKontak, onHapus: _hapusKontak),
           const FavoritPage(),
-          const TentangPage(),
         ],
       ),
       // FloatingActionButton hanya ditampilkan di tab Kontak
