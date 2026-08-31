@@ -1,0 +1,156 @@
+import 'package:flutter/material.dart';
+import '../models/kontak.dart';
+import 'kontak_page.dart';
+import 'favorit_page.dart';
+import 'tentang_page.dart';
+import 'tambah_kontak_page.dart';
+
+// Halaman Beranda (halaman utama aplikasi)
+// Terdiri dari:
+// - AppBar
+// - Navigation Drawer (menu: Kontak, Tambah Kontak, Favorit, Tentang)
+// - TabBar & TabBarView (tab: Kontak, Favorit, Tentang)
+// - FloatingActionButton (menambah kontak baru, hanya tampil di tab Kontak)
+class BerandaPage extends StatefulWidget {
+  const BerandaPage({super.key});
+
+  @override
+  State<BerandaPage> createState() => _BerandaPageState();
+}
+
+class _BerandaPageState extends State<BerandaPage>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  // Data kontak disimpan di sini agar tetap sama saat berpindah tab
+  final List<Kontak> _daftarKontak = [];
+
+  static const int _tabKontak = 0;
+  static const int _tabFavorit = 1;
+  static const int _tabTentang = 2;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    // agar FloatingActionButton ikut update saat tab berpindah
+    _tabController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  // Membuka Halaman Tambah Kontak, lalu menerima data kontak baru
+  // yang dikirim kembali lewat Navigator.pop(context, kontakBaru)
+  Future<void> _bukaTambahKontak() async {
+    final kontakBaru = await Navigator.push<Kontak>(
+      context,
+      MaterialPageRoute(builder: (context) => const TambahKontakPage()),
+    );
+
+    if (kontakBaru != null) {
+      setState(() {
+        _daftarKontak.add(kontakBaru);
+        _tabController.index = _tabKontak; // kembali ke tab Kontak
+      });
+    }
+  }
+
+  void _hapusKontak(int index) {
+    setState(() {
+      _daftarKontak.removeAt(index);
+    });
+  }
+
+  // Dipanggil dari menu Drawer untuk berpindah tab / halaman
+  void _pilihMenuDrawer(int index) {
+    Navigator.pop(context); // tutup drawer
+
+    if (index == -1) {
+      // -1 menandakan menu "Tambah Kontak" -> buka halaman baru
+      _bukaTambahKontak();
+    } else {
+      setState(() {
+        _tabController.index = index;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Buku Kontak'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const <Widget>[
+            Tab(icon: Icon(Icons.contacts), text: 'Kontak'),
+            Tab(icon: Icon(Icons.star), text: 'Favorit'),
+            Tab(icon: Icon(Icons.info), text: 'Tentang'),
+          ],
+        ),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.indigo),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  Icon(Icons.contact_page, color: Colors.white, size: 40),
+                  SizedBox(height: 8),
+                  Text(
+                    'Menu Navigasi',
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.contacts),
+              title: const Text('Kontak'),
+              onTap: () => _pilihMenuDrawer(_tabKontak),
+            ),
+            ListTile(
+              leading: const Icon(Icons.person_add),
+              title: const Text('Tambah Kontak'),
+              onTap: () => _pilihMenuDrawer(-1),
+            ),
+            ListTile(
+              leading: const Icon(Icons.star),
+              title: const Text('Favorit'),
+              onTap: () => _pilihMenuDrawer(_tabFavorit),
+            ),
+            ListTile(
+              leading: const Icon(Icons.info),
+              title: const Text('Tentang'),
+              onTap: () => _pilihMenuDrawer(_tabTentang),
+            ),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: <Widget>[
+          KontakPage(daftarKontak: _daftarKontak, onHapus: _hapusKontak),
+          const FavoritPage(),
+          const TentangPage(),
+        ],
+      ),
+      // FloatingActionButton hanya ditampilkan di tab Kontak
+      floatingActionButton: _tabController.index == _tabKontak
+          ? FloatingActionButton(
+              onPressed: _bukaTambahKontak,
+              tooltip: 'Tambah Kontak',
+              child: const Icon(Icons.add),
+            )
+          : null,
+    );
+  }
+}
